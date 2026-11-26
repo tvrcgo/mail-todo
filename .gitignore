@@ -7,3 +7,4 @@ release/
 .env.test
 .env
 .env.local
+tests/_*.png
