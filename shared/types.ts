@@ -57,6 +57,7 @@ export interface TaskPatch {
   title?: string
   notes?: string
   due?: string | null
+  important?: boolean
 }
 
 export type ViewId = 'today' | 'important' | 'all' | `list:${string}`

@@ -9,7 +9,7 @@ export const KNOWN_TODO_HEADERS = [HEADER_ID, HEADER_REV, HEADER_DUE]
 
 
 export const SNAPSHOT_VERSION = 1
-export const APP_NAME = 'MailTodo'
+export const APP_NAME = 'Todo'
 
 export const IPC = {
   state: 'mailbox:state',
@@ -26,6 +26,7 @@ export const IPC = {
   deleteTask: 'todo:delete',
   loadNotes: 'todo:notes',
   createList: 'lists:create',
+  renameList: 'lists:rename',
   deleteList: 'lists:delete',
   focus: 'window:focus',
 } as const

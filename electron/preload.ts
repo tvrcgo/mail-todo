@@ -5,7 +5,7 @@ import type { MailboxState, Result, Settings, Task } from '../shared/types'
 
 const invoke = <T>(channel: string, payload?: unknown): Promise<Result<T>> => ipcRenderer.invoke(channel, payload)
 
-export interface MailtodoApi {
+export interface TodoApi {
   getState(): Promise<MailboxState>
   getSettings(): Promise<Result<Settings>>
   saveSettings(input: Partial<Settings>): Promise<Result<Settings>>
@@ -19,19 +19,20 @@ export interface MailtodoApi {
   }): Promise<Result<MailboxState>>
   logout(): Promise<Result<MailboxState>>
   refresh(): Promise<Result<MailboxState>>
-  createTask(input: { listPath: string | null; title: string; notes?: string; due?: string | null }): Promise<Result<Task>>
+  createTask(input: { listPath: string | null; title: string; notes?: string; due?: string | null; important?: boolean }): Promise<Result<Task>>
   updateTask(input: { taskId: string; patch: { title?: string; notes?: string; due?: string | null } }): Promise<Result<MailboxState>>
   setDone(input: { taskId: string; done: boolean }): Promise<Result<MailboxState>>
   setImportant(input: { taskId: string; important: boolean }): Promise<Result<MailboxState>>
   deleteTask(input: { taskId: string }): Promise<Result<MailboxState>>
   loadNotes(input: { taskId: string }): Promise<Result<string>>
   createList(input: { name: string }): Promise<Result<MailboxState>>
+  renameList(input: { path: string; name: string }): Promise<Result<MailboxState>>
   deleteList(input: { path: string }): Promise<Result<MailboxState>>
   setFocused(focused: boolean): void
   onChanged(callback: (state: MailboxState) => void): () => void
 }
 
-const api: MailtodoApi = {
+const api: TodoApi = {
   getState: () => ipcRenderer.invoke(IPC.state),
   getSettings: () => invoke<Settings>(IPC.settings),
   saveSettings: (input) => invoke<Settings>(IPC.saveSettings, input),
@@ -45,6 +46,7 @@ const api: MailtodoApi = {
   deleteTask: (input) => invoke<MailboxState>(IPC.deleteTask, input),
   loadNotes: (input) => invoke<string>(IPC.loadNotes, input),
   createList: (input) => invoke<MailboxState>(IPC.createList, input),
+  renameList: (input) => invoke<MailboxState>(IPC.renameList, input),
   deleteList: (input) => invoke<MailboxState>(IPC.deleteList, input),
   setFocused: (focused) => {
     void ipcRenderer.invoke(IPC.focus, focused)
@@ -58,4 +60,4 @@ const api: MailtodoApi = {
   },
 }
 
-contextBridge.exposeInMainWorld('mailtodo', api)
+contextBridge.exposeInMainWorld('todo', api)

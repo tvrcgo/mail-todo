@@ -57,8 +57,8 @@ export async function currentUidState(client: ImapFlow, folder: string): Promise
   return { uidValidity: String(mailbox.uidValidity), uidNext: Number(mailbox.uidNext) }
 }
 
-export async function appendTask(client: ImapFlow, folder: string, message: string): Promise<number> {
-  const result = await client.append(folder, Buffer.from(message, 'utf8'), [])
+export async function appendTask(client: ImapFlow, folder: string, message: string, flags: string[] = []): Promise<number> {
+  const result = await client.append(folder, Buffer.from(message, 'utf8'), flags)
   if (!result || typeof result.uid !== 'number') {
     throw new MailError('APPEND_FAILED', '邮件已发送但服务器未返回位置，请稍后刷新')
   }

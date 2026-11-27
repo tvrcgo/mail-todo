@@ -28,6 +28,7 @@ const createTaskSchema = z.object({
   title: z.string(),
   notes: z.string().optional(),
   due: z.string().nullable().optional(),
+  important: z.boolean().optional(),
 })
 
 const taskIdSchema = z.object({ taskId: z.string().min(1) })
@@ -102,7 +103,7 @@ export function registerIpc(mailbox: Mailbox, onSettingsChanged: (settings: Sett
   ipcMain.handle(IPC.createTask, (_event, raw: unknown) =>
     wrap(async () => {
       const input = createTaskSchema.parse(raw)
-      return mailbox.createTask(input.listPath, { title: input.title, notes: input.notes, due: input.due ?? null })
+      return mailbox.createTask(input.listPath, { title: input.title, notes: input.notes, due: input.due ?? null, important: input.important })
     }),
   )
 
@@ -150,6 +151,14 @@ export function registerIpc(mailbox: Mailbox, onSettingsChanged: (settings: Sett
     wrap(async () => {
       const input = z.object({ name: z.string().min(1) }).parse(raw)
       await mailbox.addList(input.name)
+      return mailbox.getState()
+    }),
+  )
+
+  ipcMain.handle(IPC.renameList, (_event, raw: unknown) =>
+    wrap(async () => {
+      const input = z.object({ path: z.string().min(1), name: z.string().min(1) }).parse(raw)
+      await mailbox.renameList(input.path, input.name)
       return mailbox.getState()
     }),
   )

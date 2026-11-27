@@ -1,6 +1,6 @@
 {
-  "name": "mailtodo",
-  "productName": "MailTodo",
+  "name": "todo",
+  "productName": "Todo",
   "version": "0.1.0",
   "description": "以邮箱为后端的待办应用",
   "main": "dist-electron/electron/main.js",
@@ -36,8 +36,8 @@
     "vitest": "^5.1.2"
   },
   "build": {
-    "appId": "com.mailtodo.app",
-    "productName": "MailTodo",
+    "appId": "com.todo.app",
+    "productName": "Todo",
     "directories": {
       "output": "release"
     },

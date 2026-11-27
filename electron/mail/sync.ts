@@ -4,7 +4,7 @@ import type { ConnectionStatus, ListInfo, MailboxState, Task, TaskPatch } from '
 import type { AccountSettings } from '../config'
 import { Connection } from './connection'
 import { MailError, toMailError } from './errors'
-import { createList, deleteList, findTrash, listFolders } from './folders'
+import { createList, deleteList, findTrash, listFolders, renameList } from './folders'
 import { buildMessage, groupByTaskId, parseFlags, parseTask } from './mapping'
 import { emptySnapshot, readSnapshot, writeSnapshot } from './snapshot'
 import {
@@ -230,7 +230,7 @@ export class Mailbox {
       title: patch.title?.trim() || '(无标题)',
       notes: patch.notes ?? '',
       done: false,
-      important: false,
+      important: patch.important ?? false,
       due: patch.due ?? null,
       createdAt: new Date().toISOString(),
       messageId: '',
@@ -240,7 +240,7 @@ export class Mailbox {
     const raw = buildMessage({ from: account.email, to: account.email, task })
     const uid = await this.connection.run((client) =>
       withFolder(client, folder, async () => {
-        const appended = await appendTask(client, folder, raw)
+        const appended = await appendTask(client, folder, raw, task.important ? ['\\Flagged'] : [])
         return appended
       }),
     )
@@ -352,6 +352,24 @@ export class Mailbox {
 
   async addList(name: string): Promise<void> {
     await this.connection.run((client) => createList(client, name))
+    await this.refresh()
+  }
+
+  async renameList(listPath: string, name: string): Promise<void> {
+    const next = await this.connection.run((client) => renameList(client, listPath, name))
+    if (next.path === listPath) return
+
+    // 条目整体搬到新路径，界面在 refresh 完成前不会闪成空列表
+    const entry = this.snapshot.folders[listPath]
+    if (entry) {
+      delete this.snapshot.folders[listPath]
+      entry.tasks = entry.tasks.map((task) => ({ ...task, folder: next.path }))
+      this.snapshot.folders[next.path] = entry
+    }
+    this.lists = this.lists.map((list) => (list.path === listPath ? next : list))
+    this.tasks = this.tasks.map((task) => (task.folder === listPath ? { ...task, folder: next.path } : task))
+    this.publish()
+
     await this.refresh()
   }
 

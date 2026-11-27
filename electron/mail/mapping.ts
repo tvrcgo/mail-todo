@@ -73,7 +73,7 @@ export function buildMessage(input: BuildInput): string {
     `To: ${input.to}`,
     `Subject: ${encodeHeaderValue(task.title)}`,
     `Date: ${formatDate(new Date())}`,
-    `Message-ID: ${task.messageId || `<${task.id}@mailtodo>`}`,
+    `Message-ID: ${task.messageId || `<${task.id}@todo>`}`,
     `MIME-Version: 1.0`,
     `Content-Type: text/plain; charset=UTF-8`,
     `Content-Transfer-Encoding: base64`,

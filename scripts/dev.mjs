@@ -13,7 +13,7 @@ await server.listen()
 const url = server.resolvedUrls?.local?.[0]
 
 // 优先用打过图标补丁的专用入口，避免命中 Windows 对 electron.exe 路径的旧图标缓存
-const aliasPath = path.join(path.dirname(electron), 'electron-mailtodo.exe')
+const aliasPath = path.join(path.dirname(electron), 'electron-todo.exe')
 const executable = existsSync(aliasPath) ? aliasPath : electron
 
 const child = spawn(executable, ['.'], {

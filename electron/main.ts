@@ -1,4 +1,5 @@
 import { app, BrowserWindow, Menu, Notification, Tray, nativeImage } from 'electron'
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 
 import { APP_NAME, IPC } from '../shared/constants'
@@ -8,6 +9,23 @@ import { registerIpc } from './ipc'
 import { Connection } from './mail/connection'
 import { Mailbox } from './mail/sync'
 import { dueForReminder, isReminderTime } from './reminder'
+
+/** 应用改名为 Todo 后 userData 目录也变了，把旧的账号与快照搬过来，避免用户重新登录 */
+function migrateUserData(): void {
+  const target = app.getPath('userData')
+  const legacy = path.join(app.getPath('appData'), 'MailTodo')
+  if (target === legacy || existsSync(path.join(target, 'credentials.bin'))) return
+  if (!existsSync(legacy)) return
+
+  mkdirSync(target, { recursive: true })
+  // Local State 里存着 safeStorage 的加密密钥，漏了它旧密文解不开
+  for (const name of ['settings.json', 'credentials.bin', 'snapshot.json', 'Local State']) {
+    const source = path.join(legacy, name)
+    if (existsSync(source)) copyFileSync(source, path.join(target, name))
+  }
+}
+
+migrateUserData()
 
 const connection = new Connection(null)
 const mailbox = new Mailbox(connection)
@@ -76,7 +94,7 @@ function createTray(): void {
   tray.setToolTip(APP_NAME)
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: '打开 MailTodo', click: () => showWindow() },
+      { label: '打开 Todo', click: () => showWindow() },
       { type: 'separator' },
       {
         label: '退出',
@@ -124,7 +142,7 @@ function startReminderLoop(): void {
 async function bootstrap(): Promise<void> {
   Menu.setApplicationMenu(null)
   // 不设置的话 Windows 会把窗口归到 electron.exe 名下，任务栏显示 Electron 默认图标
-  app.setAppUserModelId('com.mailtodo.app')
+  app.setAppUserModelId('com.todo.app')
   settings = await loadSettings()
   registerIpc(mailbox, (next) => {
     settings = next

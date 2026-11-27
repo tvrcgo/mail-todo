@@ -49,7 +49,7 @@ export class Connection {
       auth: { user: settings.email, pass: settings.password },
       logger: false,
       emitLogs: false,
-      clientInfo: { name: APP_NAME, version: '0.1.0', vendor: 'MailTodo' },
+      clientInfo: { name: APP_NAME, version: '0.1.0', vendor: 'Todo' },
       disableAutoIdle: true,
     })
   }

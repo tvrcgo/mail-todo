@@ -2,7 +2,7 @@
  * 给开发模式用的 electron.exe 打上应用图标。
  *
  * 打包版不需要这一步：electron-builder 会按 package.json 的 build.win.icon 直接写入
- * MailTodo.exe。但 `npm run dev` 跑的是 node_modules/electron/dist/electron.exe，
+ * Todo.exe。但 `npm run dev` 跑的是 node_modules/electron/dist/electron.exe，
  * Windows 的任务栏图标取自可执行文件本身，不处理就会显示 Electron 的默认图标。
  *
  * 重装依赖后需要重跑一次：npm run dev:icon（rcedit 已随仓库放在 scripts/bin 下）
@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process'
 import { existsSync, linkSync, unlinkSync } from 'node:fs'
 import path from 'node:path'
 
-const DEV_ALIAS = 'electron-mailtodo.exe'
+const DEV_ALIAS = 'electron-todo.exe'
 const root = path.resolve(import.meta.dirname, '..')
 const electronExe = path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe')
 const icon = path.join(root, 'assets', 'icon.ico')

@@ -52,6 +52,32 @@ export async function createList(client: ImapFlow, name: string): Promise<ListIn
   return { path: mailbox, name: display }
 }
 
+export async function renameList(client: ImapFlow, listPath: string, name: string): Promise<ListInfo> {
+  if (listPath.toUpperCase() === INBOX_PATH) {
+    throw new MailError('NOT_A_LIST', '收件箱是默认列表，不能重命名')
+  }
+  if (!listPath.startsWith(LIST_PREFIX)) {
+    throw new MailError('NOT_A_LIST', '只能重命名 Todo- 前缀的列表文件夹')
+  }
+
+  const display = validateListName(name)
+  const target = LIST_PREFIX + display
+  if (target === listPath) return { path: listPath, name: display }
+
+  const { lists } = await listFolders(client)
+  if (lists.some((item) => item.name === display)) {
+    throw new MailError('DUPLICATE_NAME', `已存在名为“${display}”的列表`)
+  }
+
+  try {
+    await client.mailboxRename(listPath, target)
+  } catch (error) {
+    throw new MailError('RENAME_FAILED', `邮箱拒绝重命名文件夹：${(error as Error).message}`)
+  }
+
+  return { path: target, name: display }
+}
+
 export async function deleteList(client: ImapFlow, listPath: string): Promise<void> {
   if (listPath.toUpperCase() === INBOX_PATH) {
     throw new MailError('NOT_A_LIST', '收件箱是默认列表，不能删除')
