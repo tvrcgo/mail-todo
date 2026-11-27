@@ -10,7 +10,8 @@ import { TaskDetail } from './components/TaskDetail'
 import { TaskList } from './components/TaskList'
 import { useMailbox } from './hooks/useMailbox'
 import { useResizable } from './hooks/useResizable'
-import { matchesQuery, startOfToday, tasksForView, viewTitle } from './lib/views'
+import logo from './assets/logo.png'
+import { searchTasks, startOfToday, tasksForView, viewTitle } from './lib/views'
 
 export default function App() {
   const { state, ready, error, act } = useMailbox()
@@ -20,9 +21,10 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [busy, setBusy] = useState(false)
   const [creatingList, setCreatingList] = useState(false)
+  const [renamingList, setRenamingList] = useState(false)
   const [deletingList, setDeletingList] = useState(false)
-  const sidebar = useResizable('mailtodo.sidebarWidth', 260, 200, 420)
-  const detail = useResizable('mailtodo.detailWidth', 320, 280, 560)
+  const sidebar = useResizable('todo.sidebarWidth', 260, 200, 420)
+  const detail = useResizable('todo.detailWidth', 280, 240, 560)
 
   const today = startOfToday()
   const lists = state.lists
@@ -43,13 +45,11 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [selectedId])
 
-  const visible = useMemo(() => {
-    const { active, completed } = tasksForView(tasks, view, today)
-    return {
-      active: active.filter((task) => matchesQuery(task, query)),
-      completed: completed.filter((task) => matchesQuery(task, query)),
-    }
-  }, [tasks, view, today, query])
+  const searching = query.trim().length > 0
+  const visible = useMemo(
+    () => (searching ? searchTasks(tasks, query) : tasksForView(tasks, view, today)),
+    [tasks, view, today, query, searching],
+  )
 
   const counts = useMemo(() => {
     const result: Record<string, number> = { today: 0, important: 0, all: 0 }
@@ -77,19 +77,27 @@ export default function App() {
   }
 
   const toggleDone = (task: Task) => {
-    void act(window.mailtodo.setDone({ taskId: task.id, done: !task.done }))
+    void act(window.todo.setDone({ taskId: task.id, done: !task.done }))
   }
 
   const toggleImportant = (task: Task) => {
-    void act(window.mailtodo.setImportant({ taskId: task.id, important: !task.important }))
+    void act(window.todo.setImportant({ taskId: task.id, important: !task.important }))
   }
 
   const addTask = (title: string, due: string | null) => {
-    void act(window.mailtodo.createTask({ listPath: currentListPath, title, due }))
+    const inTodayView = view === 'today'
+    void act(
+      window.todo.createTask({
+        listPath: currentListPath,
+        title,
+        due: due ?? (inTodayView ? today : null),
+        important: view === 'important' ? true : undefined,
+      }),
+    )
   }
 
   const savePatch = (task: Task, patch: { title?: string; notes?: string; due?: string | null }) => {
-    void act(window.mailtodo.updateTask({ taskId: task.id, patch }))
+    void act(window.todo.updateTask({ taskId: task.id, patch }))
   }
 
   if (!ready) {
@@ -103,7 +111,7 @@ export default function App() {
         message={error}
         onSubmit={(input) => {
           setBusy(true)
-          void act(window.mailtodo.login(input)).finally(() => setBusy(false))
+          void act(window.todo.login(input)).finally(() => setBusy(false))
         }}
       />
     )
@@ -114,12 +122,17 @@ export default function App() {
       className="app"
       style={{ '--sidebar-w': `${sidebar.width}px`, '--detail-w': `${detail.width}px` } as React.CSSProperties}
     >
-      <div className="titlebar" />
+      <div className="titlebar">
+        <img className="titlebar__icon" src={logo} alt="" />
+        <span className="titlebar__title">Todo</span>
+      </div>
       <Sidebar
         view={view}
         inboxPath={state.inboxPath}
         lists={lists}
         counts={counts}
+        query={query}
+        onQueryChange={setQuery}
         onSelect={(next) => {
           setView(next)
           setSelectedId(null)
@@ -140,64 +153,64 @@ export default function App() {
         {state.status.error ? (
           <div className="banner banner--error">
             <span>{state.status.error}</span>
-            <button className="button button--ghost" onClick={() => void act(window.mailtodo.refresh())}>
+            <button className="button button--ghost" onClick={() => void act(window.todo.refresh())}>
               重试
             </button>
           </div>
         ) : null}
 
         <TaskList
-          title={viewTitle(view, currentListName)}
+          title={searching ? '搜索' : viewTitle(view, currentListName)}
           active={visible.active}
           completed={visible.completed}
           today={today}
           selectedId={selectedId}
           query={query}
-          onQueryChange={setQuery}
           onSelect={(task) => setSelectedId(task.id)}
           onToggleDone={toggleDone}
           onToggleImportant={toggleImportant}
-          canDeleteList={currentListPath !== null && currentListPath !== inboxPath}
+          canManageList={currentListPath !== null && currentListPath !== inboxPath}
+          onRenameList={() => setRenamingList(true)}
           onDeleteList={() => setDeletingList(true)}
           quickAdd={<QuickAdd placeholder={`在「${viewTitle(view, currentListName)}」中添加任务`} onAdd={addTask} />}
         />
-      </div>
 
-      {selectedTask ? (
-        <div className="drawer-layer">
-          <div className="drawer-scrim" onClick={() => setSelectedId(null)} />
-          <div className="drawer" style={{ width: detail.width }}>
-            <div
-              className="resizer drawer__resizer"
-              title="拖动调整宽度，双击恢复默认"
-              onMouseDown={(event) => detail.startDrag(event, -1)}
-              onDoubleClick={detail.reset}
-            />
-            <TaskDetail
-              task={selectedTask}
-              today={today}
-              listName={taskListName(selectedTask.folder)}
-              onClose={() => setSelectedId(null)}
-              onPatch={(patch) => savePatch(selectedTask, patch)}
-              onToggleImportant={() => toggleImportant(selectedTask)}
-              onDelete={() => {
-                void act(window.mailtodo.deleteTask({ taskId: selectedTask.id }))
-                setSelectedId(null)
-              }}
-            />
+        {selectedTask ? (
+          <div className="drawer-layer">
+            <div className="drawer-scrim" onClick={() => setSelectedId(null)} />
+            <div className="drawer" style={{ width: detail.width }}>
+              <div
+                className="resizer drawer__resizer"
+                title="拖动调整宽度，双击恢复默认"
+                onMouseDown={(event) => detail.startDrag(event, -1)}
+                onDoubleClick={detail.reset}
+              />
+              <TaskDetail
+                task={selectedTask}
+                today={today}
+                listName={taskListName(selectedTask.folder)}
+                onClose={() => setSelectedId(null)}
+                onPatch={(patch) => savePatch(selectedTask, patch)}
+                onToggleImportant={() => toggleImportant(selectedTask)}
+                onDelete={() => {
+                  void act(window.todo.deleteTask({ taskId: selectedTask.id }))
+                  setSelectedId(null)
+                }}
+              />
+            </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
 
       {showSettings ? (
         <SettingsDialog
           account={state.status.email}
           onClose={() => setShowSettings(false)}
           onSave={(patch: Partial<Settings>) => {
-            void act(window.mailtodo.saveSettings(patch))
+            void act(window.todo.saveSettings(patch))
           }}
           onLogout={() => {
-            void act(window.mailtodo.logout())
+            void act(window.todo.logout())
             setView('today')
             setSelectedId(null)
           }}
@@ -211,7 +224,24 @@ export default function App() {
           confirmText="创建"
           onClose={() => setCreatingList(false)}
           onSubmit={(name) => {
-            void act(window.mailtodo.createList({ name }))
+            void act(window.todo.createList({ name }))
+          }}
+        />
+      ) : null}
+
+      {renamingList && currentListPath && currentListName ? (
+        <InputDialog
+          title="重命名列表"
+          placeholder="列表名称"
+          initialValue={currentListName}
+          confirmText="保存"
+          onClose={() => setRenamingList(false)}
+          onSubmit={(name) => {
+            void (async () => {
+              const next = await act(window.todo.renameList({ path: currentListPath, name }))
+              const renamed = next?.lists.find((item) => item.name === name)
+              if (renamed) setView(`list:${renamed.path}`)
+            })()
           }}
         />
       ) : null}
@@ -223,7 +253,7 @@ export default function App() {
           confirmText="删除"
           onClose={() => setDeletingList(false)}
           onConfirm={() => {
-            void act(window.mailtodo.deleteList({ path: currentListPath }))
+            void act(window.todo.deleteList({ path: currentListPath }))
             setView('all')
           }}
         />

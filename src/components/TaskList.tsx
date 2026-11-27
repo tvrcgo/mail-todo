@@ -8,14 +8,16 @@ interface Props {
   active: Task[]
   completed: Task[]
   today: string
-  selectedId: string | null
   query: string
+  selectedId: string | null
+
   quickAdd: React.ReactNode
-  canDeleteList: boolean
-  onQueryChange: (value: string) => void
+  canManageList: boolean
+
   onSelect: (task: Task) => void
   onToggleDone: (task: Task) => void
   onToggleImportant: (task: Task) => void
+  onRenameList: () => void
   onDeleteList: () => void
 }
 
@@ -24,14 +26,16 @@ export function TaskList({
   active,
   completed,
   today,
-  selectedId,
   query,
+  selectedId,
+
   quickAdd,
-  canDeleteList,
-  onQueryChange,
+  canManageList,
+
   onSelect,
   onToggleDone,
   onToggleImportant,
+  onRenameList,
   onDeleteList,
 }: Props) {
   const [showCompleted, setShowCompleted] = useState(false)
@@ -48,12 +52,7 @@ export function TaskList({
     <section className="list-pane">
       <header className="list-pane__header">
         <h1 className="list-pane__title">{title}</h1>
-        <input
-          className="list-pane__search"
-          placeholder="搜索本地任务"
-          value={query}
-          onChange={(event) => onQueryChange(event.target.value)}
-        />
+
         <div className="list-menu">
           <button
             className="icon-button list-menu__trigger"
@@ -68,8 +67,18 @@ export function TaskList({
           {menuOpen ? (
             <div className="list-menu__panel" onClick={(event) => event.stopPropagation()}>
               <button
+                className="list-menu__item"
+                disabled={!canManageList}
+                onClick={() => {
+                  setMenuOpen(false)
+                  onRenameList()
+                }}
+              >
+                重命名列表
+              </button>
+              <button
                 className="list-menu__item list-menu__item--danger"
-                disabled={!canDeleteList}
+                disabled={!canManageList}
                 onClick={() => {
                   setMenuOpen(false)
                   onDeleteList()
@@ -82,51 +91,53 @@ export function TaskList({
         </div>
       </header>
 
+      <div className="list-pane__body">
+        {active.length === 0 && completed.length === 0 ? (
+          <div className="empty">
+            <div className="empty__title">{query ? '没有匹配的任务' : '这里还空着'}</div>
+            <div className="empty__hint">{query ? '换个关键词试试' : '在下方输入框写下第一件事，回车即可'}</div>
+          </div>
+        ) : (
+          <ul className="task-list">
+            {active.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                today={today}
+                selected={task.id === selectedId}
+                onSelect={() => onSelect(task)}
+                onToggleDone={() => onToggleDone(task)}
+                onToggleImportant={() => onToggleImportant(task)}
+              />
+            ))}
+          </ul>
+        )}
+
+        {completed.length > 0 ? (
+          <div className="completed">
+            <button className="completed__toggle" onClick={() => setShowCompleted((value) => !value)}>
+              {showCompleted ? '收起' : `已完成 ${completed.length}`}
+            </button>
+            {showCompleted ? (
+              <ul className="task-list">
+                {completed.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    today={today}
+                    selected={task.id === selectedId}
+                    onSelect={() => onSelect(task)}
+                    onToggleDone={() => onToggleDone(task)}
+                    onToggleImportant={() => onToggleImportant(task)}
+                  />
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
       {quickAdd}
-
-      {active.length === 0 && completed.length === 0 ? (
-        <div className="empty">
-          <div className="empty__title">{query ? '没有匹配的任务' : '这里还空着'}</div>
-          <div className="empty__hint">{query ? '换个关键词试试' : '在上方输入框写下第一件事，回车即可'}</div>
-        </div>
-      ) : (
-        <ul className="task-list">
-          {active.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              today={today}
-              selected={task.id === selectedId}
-              onSelect={() => onSelect(task)}
-              onToggleDone={() => onToggleDone(task)}
-              onToggleImportant={() => onToggleImportant(task)}
-            />
-          ))}
-        </ul>
-      )}
-
-      {completed.length > 0 ? (
-        <div className="completed">
-          <button className="completed__toggle" onClick={() => setShowCompleted((value) => !value)}>
-            {showCompleted ? '收起' : `已完成 ${completed.length}`}
-          </button>
-          {showCompleted ? (
-            <ul className="task-list">
-              {completed.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  today={today}
-                  selected={task.id === selectedId}
-                  onSelect={() => onSelect(task)}
-                  onToggleDone={() => onToggleDone(task)}
-                  onToggleImportant={() => onToggleImportant(task)}
-                />
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      ) : null}
     </section>
   )
 }

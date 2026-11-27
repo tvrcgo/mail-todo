@@ -1,26 +1,37 @@
 import type { ListInfo, ViewId } from '../../shared/types'
-import logo from '../assets/logo.png'
-import { GearIcon, ListIcon, PlusIcon, StarIcon, SunIcon } from './Icons'
+import { GearIcon, InboxIcon, ListIcon, PlusIcon, SearchIcon, StarIcon, SunIcon } from './Icons'
 
 interface Props {
   view: ViewId
   inboxPath: string | null
   lists: ListInfo[]
   counts: Record<string, number>
+  query: string
+  onQueryChange: (value: string) => void
   onSelect: (view: ViewId) => void
   onOpenSettings: () => void
   onCreateList: () => void
 }
 
-export function Sidebar({ view, inboxPath, lists, counts, onSelect, onOpenSettings, onCreateList }: Props) {
+export function Sidebar({
+  view,
+  inboxPath,
+  lists,
+  counts,
+  query,
+  onQueryChange,
+  onSelect,
+  onOpenSettings,
+  onCreateList,
+}: Props) {
   const taskView: ViewId = inboxPath ? `list:${inboxPath}` : 'all'
 
   return (
     <aside className="sidebar">
-      <div className="sidebar__brand">
-        <img className="sidebar__logo" src={logo} alt="" />
-        <div className="sidebar__name">MailTodo</div>
-      </div>
+      <label className="sidebar__search">
+        <SearchIcon size={14} />
+        <input value={query} placeholder="搜索所有任务" onChange={(event) => onQueryChange(event.target.value)} />
+      </label>
 
       <nav className="sidebar__nav">
         <NavItem
@@ -38,7 +49,7 @@ export function Sidebar({ view, inboxPath, lists, counts, onSelect, onOpenSettin
           onClick={() => onSelect('important')}
         />
         <NavItem
-          icon={<ListIcon />}
+          icon={<InboxIcon />}
           label="任务"
           count={counts[taskView] ?? 0}
           active={view === taskView}
@@ -47,7 +58,7 @@ export function Sidebar({ view, inboxPath, lists, counts, onSelect, onOpenSettin
       </nav>
 
       <div className="sidebar__section">
-        <div className="sidebar__section-title">列表</div>
+        {lists.length > 0 ? <div className="sidebar__divider" /> : null}
         <div className="sidebar__lists">
           {lists.map((list) => (
             <button
@@ -55,12 +66,13 @@ export function Sidebar({ view, inboxPath, lists, counts, onSelect, onOpenSettin
               className={`nav-item ${view === `list:${list.path}` ? 'nav-item--active' : ''}`}
               onClick={() => onSelect(`list:${list.path}`)}
             >
-              <span className="nav-item__dot" />
+              <span className="nav-item__icon">
+                <ListIcon />
+              </span>
               <span className="nav-item__label">{list.name}</span>
               {counts[`list:${list.path}`] ? <span className="nav-item__count">{counts[`list:${list.path}`]}</span> : null}
             </button>
           ))}
-          {lists.length === 0 ? <div className="sidebar__hint">还没有列表，点右下角 + 新建</div> : null}
         </div>
       </div>
 

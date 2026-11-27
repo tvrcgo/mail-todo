@@ -18,7 +18,7 @@ export function SettingsDialog({ account, onClose, onSave, onLogout }: Props) {
   const [providerLabel, setProviderLabel] = useState('')
 
   useEffect(() => {
-    void window.mailtodo.getSettings().then((result) => {
+    void window.todo.getSettings().then((result) => {
       if (!result.ok) return
       setReminderTime(result.data.reminderTime)
       setLaunchAtLogin(result.data.launchAtLogin)

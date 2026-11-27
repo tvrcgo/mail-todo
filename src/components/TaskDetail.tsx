@@ -40,7 +40,7 @@ export function TaskDetail({ task, today, listName, onClose, onPatch, onToggleIm
     loadedFor.current = task.id
     setLoadingNotes(true)
     setNotes('')
-    void window.mailtodo.loadNotes({ taskId: task.id }).then((result) => {
+    void window.todo.loadNotes({ taskId: task.id }).then((result) => {
       setLoadingNotes(false)
       if (result.ok) setNotes(result.data)
     })

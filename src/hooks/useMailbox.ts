@@ -17,18 +17,18 @@ export function useMailbox() {
 
   useEffect(() => {
     mounted.current = true
-    void window.mailtodo.getState().then((next) => {
+    void window.todo.getState().then((next) => {
       if (!mounted.current) return
       setState(next)
       setReady(true)
     })
 
-    const off = window.mailtodo.onChanged((next) => {
+    const off = window.todo.onChanged((next) => {
       if (mounted.current) setState(next)
     })
 
-    const onFocus = () => window.mailtodo.setFocused(true)
-    const onBlur = () => window.mailtodo.setFocused(false)
+    const onFocus = () => window.todo.setFocused(true)
+    const onBlur = () => window.todo.setFocused(false)
     window.addEventListener('focus', onFocus)
     window.addEventListener('blur', onBlur)
 

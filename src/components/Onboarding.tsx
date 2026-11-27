@@ -33,7 +33,7 @@ export function Onboarding({ busy, message, onSubmit }: Props) {
         <div className="onboarding__brand">
           <img className="onboarding__logo" src={logo} alt="" />
           <div>
-            <h1>MailTodo</h1>
+            <h1>Todo</h1>
             <p>用你自己的邮箱当待办后端</p>
           </div>
         </div>

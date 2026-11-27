@@ -1,8 +1,8 @@
-import type { MailtodoApi } from '../../electron/preload'
+import type { TodoApi } from '../../electron/preload'
 
 declare global {
   interface Window {
-    mailtodo: MailtodoApi
+    todo: TodoApi
   }
 }
 

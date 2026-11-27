@@ -42,6 +42,15 @@ export function ListIcon(props: IconProps) {
   )
 }
 
+export function InboxIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M3 12h5l1.5 2.5h5L16 12h5" />
+    </svg>
+  )
+}
+
 export function PlusIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

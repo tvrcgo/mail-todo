@@ -6,13 +6,24 @@ export function startOfToday(now = new Date()): string {
   return now.toLocaleDateString('sv-SE')
 }
 
-export function tasksForView(tasks: Task[], view: ViewId, today: string): { active: Task[]; completed: Task[] } {
-  const scoped = tasks.filter((task) => inView(task, view, today))
+export function tasksForView(tasks: Task[], view: ViewId, today: string): TaskGroups {
+  return groupTasks(tasks.filter((task) => inView(task, view, today)))
+}
+
+/** 跨列表检索：关键词为空时返回全部任务 */
+export function searchTasks(tasks: Task[], query: string): TaskGroups {
+  return groupTasks(tasks.filter((task) => matchesQuery(task, query)))
+}
+
+export interface TaskGroups {
+  active: Task[]
+  completed: Task[]
+}
+
+function groupTasks(tasks: Task[]): TaskGroups {
   return {
-    active: sortActive(scoped.filter((task) => !task.done)),
-    completed: scoped
-      .filter((task) => task.done)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    active: sortActive(tasks.filter((task) => !task.done)),
+    completed: tasks.filter((task) => task.done).sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   }
 }
 
