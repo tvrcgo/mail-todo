@@ -27,7 +27,7 @@ const SET_VALUE = `
 `
 
 const getState = async () =>
-  JSON.parse(await page.evaluate('window.mailtodo.getState().then((s) => JSON.stringify(s))'))
+  JSON.parse(await page.evaluate('window.todo.getState().then((s) => JSON.stringify(s))'))
 
 const findTask = async (title) => (await getState()).tasks.find((task) => task.title === title) ?? null
 
@@ -62,7 +62,7 @@ try {
   // 清理上一轮遗留的同名任务，保证用例可重复运行
   const stale = (await getState()).tasks.filter((task) => task.title.startsWith('自检任务'))
   for (const task of stale) {
-    await page.evaluate(`window.mailtodo.deleteTask({ taskId: ${JSON.stringify(task.id)} })`)
+    await page.evaluate(`window.todo.deleteTask({ taskId: ${JSON.stringify(task.id)} })`)
   }
   if (stale.length) {
     await waitFor(async () => (await getState()).tasks.every((task) => !task.title.startsWith('自检任务')), {

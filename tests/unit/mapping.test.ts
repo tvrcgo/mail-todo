@@ -10,7 +10,7 @@ function row(folder: string, uid: number, headers: string, flags: string[] = [])
 const baseHeaders = [
   'Subject: 写周报',
   'Date: Wed, 26 Nov 2026 10:00:00 +0800',
-  'Message-ID: <abc@mailtodo>',
+  'Message-ID: <abc@todo>',
   'X-Todo-Id: 11111111-1111-1111-1111-111111111111',
   'X-Todo-Rev: 3',
   'X-Todo-Due: 2026-11-30',
@@ -29,14 +29,14 @@ describe('parseTask', () => {
       done: true,
       important: true,
       due: '2026-11-30',
-      messageId: '<abc@mailtodo>',
+      messageId: '<abc@todo>',
     })
   })
 
   it('缺少 X-Todo-Id 时回退 Message-ID', () => {
-    const headers = 'Subject: 无标识\r\nMessage-ID: <fallback@mailtodo>'
+    const headers = 'Subject: 无标识\r\nMessage-ID: <fallback@todo>'
     const task = parseTask(row('Todo-任务', 1, headers))
-    expect(task?.id).toBe('<fallback@mailtodo>')
+    expect(task?.id).toBe('<fallback@todo>')
     expect(task?.rev).toBe(1)
   })
 
@@ -128,12 +128,12 @@ describe('buildMessage', () => {
 
   it('没有 Message-ID 时用任务 Id 生成', () => {
     const raw = buildMessage({ from: 'a@b.c', to: 'a@b.c', task })
-    expect(raw).toContain(`Message-ID: <${task.id}@mailtodo>`)
+    expect(raw).toContain(`Message-ID: <${task.id}@todo>`)
   })
 
   it('保留既有 Message-ID，维持邮件会话', () => {
-    const raw = buildMessage({ from: 'a@b.c', to: 'a@b.c', task: { ...task, messageId: '<keep@mailtodo>' } })
-    expect(raw).toContain('Message-ID: <keep@mailtodo>')
+    const raw = buildMessage({ from: 'a@b.c', to: 'a@b.c', task: { ...task, messageId: '<keep@todo>' } })
+    expect(raw).toContain('Message-ID: <keep@todo>')
   })
 
   it('不重复输出已知 X-Todo 头', () => {
